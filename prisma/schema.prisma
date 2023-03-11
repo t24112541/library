@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js" 
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  ON  @map("on")
+  OFF @map("off")
+}
+
+model Book {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(50)
+  amount      Int?      @db.UnsignedInt
+  author      String    @db.VarChar(50)
+  publicher   String    @db.VarChar(50)
+  status      Status    @default(ON)
+  createdAt   DateTime  @default(now())               @map("created_at")
+  updatedAt   DateTime  @updatedAt                    @map("updated_at")
+  deleted     DateTime?
+  bookTypeId  Int       @db.Int                       @map("book_type_id")
+  
+  bookLogBorrow BookLog[]
+  bookType      BookType     @relation(fields: [bookTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  @@map("book")
+}
+
+model BookType {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(50)
+  status    Status    @default(ON)
+  createdAt DateTime  @default(now())               @map("created_at")
+  updatedAt DateTime  @updatedAt                    @map("updated_at")
+  deleted   DateTime?
+
+  books     Book[]
+  @@map("book_type")
+}
+
+enum Role {
+  USER  @map("user")
+  ADMIN @map("admin")
+}
+
+model Users {
+  id        Int       @id @default(autoincrement())
+  firstName String    @db.VarChar(50)               @map("first_name")
+  lastName  String?   @db.VarChar(50)               @map("last_name")
+  tel       String?   @db.VarChar(10)
+  email     String    @db.VarChar(50)
+  username  String    @db.VarChar(50) @unique
+  password  String    @db.VarChar(50)
+  role      Role      @default(USER)
+  status    Status    @default(ON)
+  createdAt DateTime  @default(now())               @map("created_at")
+  updatedAt DateTime  @updatedAt                    @map("updated_at")
+  deleted   DateTime?
+
+  adminLogBorrow    BookLog[] @relation("admin")
+  userLogBorrow     BookLog[] @relation("user")
+  @@map("users")
+}
+
+model BookLog {
+  id          Int       @id @default(autoincrement())
+  adminId     Int       @db.Int                     @map("admin_id")
+  userId      Int       @db.Int                     @map("user_id")
+  bookId      Int       @db.Int                     @map("book_id")
+  borrowDate  DateTime  @default(now())             @map("borrow_date")
+  returnDate  DateTime? @map("return_date")
+  status      Status    @default(ON)
+  createdAt   DateTime  @default(now())             @map("created_at")
+  updatedAt   DateTime  @updatedAt                  @map("updated_at")
+  deleted     DateTime?
+
+  admin       Users     @relation(name: "admin", fields: [adminId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  user        Users     @relation(name: "user", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  book        Book      @relation(fields: [bookId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  @@map("book_log")
+}

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Book` MODIFY `amount` INTEGER UNSIGNED NULL;
